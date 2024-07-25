@@ -133,7 +133,7 @@ HAL_StatusTypeDef register_write_8(I2C_HandleTypeDef * hi2c, uint16_t DevAddress
 HAL_StatusTypeDef register_read_8(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
 HAL_StatusTypeDef register_write_16(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
 HAL_StatusTypeDef register_read_16(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
-
+float BMP280_read_Temperature(I2C_HandleTypeDef *hi2c);
 /*I2C_HandleTypeDef * hi2c: A pointer to a I2C_HandleTypeDef structure that contains the configuration information for the specified I2C.
 uint16_t DevAddress: The device address. The device 7 bits address value in the datasheet must be shifted to the left before calling the interface.
 uint16_t MemAddress: The memory address to read from.

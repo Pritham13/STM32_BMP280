@@ -28,14 +28,12 @@ void register_write_8(I2C_HandleTypeDef &hi2c, uint16_t MemAddress, uint8_t * pD
   HAL_I2C_Mem_write(&hi2c, CHIP_ID, MemAddress,8, pData, 4, HAL_MAX_DELAY);
 }
 uint16_t register_read_16(I2C_HandleTypeDef &hi2c, uint16_t MemAddress){
-  uint16_t pdata;
-  HAL_I2C_Mem_Read(&hi2c, CHIP_ID, MemAddress, 16, &pData, 4, HAL_MAX_DELAY);// need to decide pData
-  return pdata;
+  uint8_t msb,lsb;
+  HAL_I2C_Mem_Read(&hi2c, CHIP_ID, MemAddress, 8, &msb, 4, HAL_MAX_DELAY);
+  HAL_I2C_Mem_Read(&hi2c, CHIP_ID, MemAddress+1, 8, &lsb, 4, HAL_MAX_DELAY);
+  return ((msb<<8)|lsb);
 }
-// TODO: have to see if its required
-void register_write_16(I2C_HandleTypeDef &hi2c, uint16_t MemAddress, uint16_t * pData){
-  HAL_I2C_Mem_write(&hi2c, CHIP_ID, MemAddress, 16, pData, 4, HAL_MAX_DELAY);
-}
+
 
 uint16_t register_read_16_LE(I2C_HandleTypeDef &hi2c, uint16_t MemAddress){
   uint16_t temp = register_read_16(hi2c,MemAddress);
@@ -74,4 +72,60 @@ void BMP280_Read_Calib_Data(I2C_HandleTypeDef &hi2c){
   bmp280_calib_data.dig_P8 = register_read_16_LE(hi2c,DIG_P8_REG);
   bmp280_calib_data.dig_P9 = register_read_16_LE(hi2c,DIG_P9_REG);
   }
+/*
+ * Reads the temperature from the device.
+ * @return The temperature in degress celcius.
+ */
+float BMP280_read_Temperature(I2C_HandleTypeDef &i2c){
+  int32_t var1, var2;
+
+  int32_t adc_T = register_read_24(TEMP_MSB_REG);
+  adc_T >>= 4;
+
+  var1 = ((((adc_T >> 3) - ((int32_t)_bmp280_calib.dig_T1 << 1))) *
+          ((int32_t)_bmp280_calib.dig_T2)) >>
+         11;
+
+  var2 = (((((adc_T >> 4) - ((int32_t)_bmp280_calib.dig_T1)) *
+            ((adc_T >> 4) - ((int32_t)_bmp280_calib.dig_T1))) >>
+           12) *
+          ((int32_t)_bmp280_calib.dig_T3)) >>
+         14;
+
+  t_fine = var1 + var2;
+
+  float T = (t_fine * 5 + 128) >> 8;
+  return T / 100;
+}
+float BMP280_read_Pressure()
+{
+  int64_t var1, var2, p;
+
+  // Must be done first to get the t_fine variable set up
+  BMP280_read_Temperature();
+
+  int32_t adc_P = register_read_24(PRESSURE_MSB_REG);
+  adc_P >>= 4;
+
+  var1 = ((int64_t)t_fine) - 128000;
+  var2 = var1 * var1 * (int64_t)_bmp280_calib.dig_P6;
+  var2 = var2 + ((var1 * (int64_t)_bmp280_calib.dig_P5) << 17);
+  var2 = var2 + (((int64_t)_bmp280_calib.dig_P4) << 35);
+  var1 = ((var1 * var1 * (int64_t)_bmp280_calib.dig_P3) >> 8) +
+         ((var1 * (int64_t)_bmp280_calib.dig_P2) << 12);
+  var1 =
+      (((((int64_t)1) << 47) + var1)) * ((int64_t)_bmp280_calib.dig_P1) >> 33;
+
+  if (var1 == 0) {
+    return 0; // avoid exception caused by division by zero
+  }
+  p = 1048576 - adc_P;
+  p = (((p << 31) - var2) * 3125) / var1;
+  var1 = (((int64_t)_bmp280_calib.dig_P9) * (p >> 13) * (p >> 13)) >> 25;
+  var2 = (((int64_t)_bmp280_calib.dig_P8) * p) >> 19;
+
+  p = ((p + var1 + var2) >> 8) + (((int64_t)_bmp280_calib.dig_P7) << 4);
+  return (float)p / 256;
+}
+
 
