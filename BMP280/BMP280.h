@@ -38,14 +38,13 @@
  *  Struct to hold calibration data.
  */
 /*Sensor structure*/
-typredef struct {
-    /* I2C handle*/
-    I2C_HandleTypeDef *i2cHandle;
+typedef struct {
     /*processed temperature*/
     float Temp_c;
     /*processed pressure*/
     float pressure_pa;
 }BMP280;
+
 typedef struct {
   uint16_t dig_T1; /**< dig_T1 cal register. */
   int16_t dig_T2;  /**<  dig_T2 cal register. */
@@ -62,6 +61,10 @@ typedef struct {
   int16_t dig_P9;  /**< dig_P9 cal register. */
 } bmp280_calib_data;
 //////////////enum////////////////////
+enum SPI_en{
+  SPI_ENABLE ;
+  SPI_DISABLE;
+}
 /** Operating mode for the sensor. */
 enum sensor_mode {
   /** Sleep mode. */
@@ -119,14 +122,18 @@ enum standby_duration{
 };
 
 /*Funtion Prototypes*/
+void BMP280_Check_Status(I2C_HandleTypeDef *hi2c);
 bool BMP280_init(I2C_HandleTypeDef *pI2cHandle);
 void reset(void);
 /**************DATA AQUISITION FUNCTIONS*******************/
 float read_temperature(void);
 float read_pressure(void);
 /**************LOW LEVEL FUNCTIONS*******************/
-HAL_StatusTypeDef register_write(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
-HAL_StatusTypeDef register_read(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
+HAL_StatusTypeDef register_write_8(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
+HAL_StatusTypeDef register_read_8(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
+HAL_StatusTypeDef register_write_16(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
+HAL_StatusTypeDef register_read_16(I2C_HandleTypeDef * hi2c, uint16_t DevAddress, uint16_t MemAddress, uint8_t * pData);
+
 /*I2C_HandleTypeDef * hi2c: A pointer to a I2C_HandleTypeDef structure that contains the configuration information for the specified I2C.
 uint16_t DevAddress: The device address. The device 7 bits address value in the datasheet must be shifted to the left before calling the interface.
 uint16_t MemAddress: The memory address to read from.
