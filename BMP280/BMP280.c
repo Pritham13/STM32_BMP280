@@ -1,9 +1,3 @@
-
-/*
-Library:				BMP280
-Written by:				Pritham H suvarna
-Description:			This is an STM32 device driver library for the BMP280 pressure sensor, using STM HAL libraries
-*/
 // List of header files 
 #include"BMP280.h"
 #include<stdio.h>
@@ -17,8 +11,6 @@ void BMP280CheckStatus(I2C_HandleTypeDef &hi2c){
     printf("BMP280 not found\r\n");
 }
 
-/**
-/*********Low level functions*******/
 uint8_t register_read_8(I2C_HandleTypeDef &hi2c, uint16_t MemAddress){
   uint8_t pdata;
   HAL_I2C_Mem_Read(&hi2c, CHIP_ID, MemAddress, 8, &pData, 4, HAL_MAX_DELAY);// need to decide pData
@@ -48,7 +40,6 @@ uint32_t register_read_24 (I2C_HandleTypeDef &hi2c, uint16_t MemAddress){
   return ((temp[0]<<16)|(temp[1]<<8)|temp[2]);
 } 
 
-/*********initialising  function*******/
 void BMP280_init(I2C_HandleTypeDef *pI2cHandle,){
     /* writing data to the control register */
   uint8_t data=(MODE_FORCED|(SAMPLING_X1<<2)|(SAMPLING_X1<<5));
@@ -72,10 +63,6 @@ void BMP280_Read_Calib_Data(I2C_HandleTypeDef &hi2c){
   bmp280_calib_data.dig_P8 = register_read_16_LE(hi2c,DIG_P8_REG);
   bmp280_calib_data.dig_P9 = register_read_16_LE(hi2c,DIG_P9_REG);
   }
-/*
- * Reads the temperature from the device.
- * @return The temperature in degress celcius.
- */
 float BMP280_read_Temperature(I2C_HandleTypeDef &i2c){
   int32_t var1, var2;
 
